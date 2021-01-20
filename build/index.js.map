@@ -1,0 +1,1 @@
+{"version":3,"sources":["anotherfile.ts","index.ts"],"names":[],"mappings":";;;;;;AAAa,ACAb,IAAA,GDAa,CAAA,OAAA,ECAb,CDAuB,ECAvB,IDAa,GCAb,CAAA,eAAA,CAAA;;AAEA,OAAO,CAAC,GAAR,CAAY,aAAA,CAAA,OAAZ","file":"index.js","sourceRoot":"..\\src","sourcesContent":["export const message = 'test';\r\n","import { message } from \"./anotherfile\";\r\n\r\nconsole.log(message);"]}
