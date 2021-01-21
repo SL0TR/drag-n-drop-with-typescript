@@ -1,5 +1,11 @@
 import { AutoBind } from "./decorators";
+import { validate} from './validators';
+import { ValidatorConfig, InputErrors, Inputs } from './interfaces';
 
+const getKeyValue = <T extends object, U extends keyof T>(obj: T) => (key: U) =>
+  obj[key];
+
+type UserInput =  { errors: InputErrors, inputVals: Inputs }
 class ProjectTemplate {
   templateElem: HTMLTemplateElement;
   hostElem: HTMLDivElement;
@@ -25,11 +31,87 @@ class ProjectTemplate {
     this.attach() 
   }
 
+  
+
+  private getUserInput(): UserInput {
+    const titleVal = this.titleInputElement.value;
+    const descVal = this.descriptionInputElement.value;
+    const peopleVal = +this.peopleInputElement.value;
+
+    const validatableTitle: ValidatorConfig = {
+      value: titleVal,
+      required: true,
+    }
+
+    const validatableDesc: ValidatorConfig = {
+      value: descVal,
+      required: true,
+      minL: 5
+    }
+
+    const validatablePeople: ValidatorConfig = {
+      value: peopleVal,
+      required: true,
+      min: 1,
+      max: 5
+    }
+    
+    const InputErrorVals : InputErrors = {
+      title: validate(validatableTitle),
+      description: validate(validatableDesc),
+      people: validate(validatablePeople)
+    }
+
+    return { errors: InputErrorVals, inputVals: {
+      title: titleVal,
+      description: descVal,
+      people: peopleVal
+    }}
+  
+  }
+
+  private printErrors(key: string, errorArr: string[]) {
+    const inputEl = this.appContainerElem.querySelector(`#${key}`)! as HTMLInputElement;
+    
+    const errorSpan = inputEl.nextElementSibling! as HTMLSpanElement;
+
+    if(errorArr.length > 0) {
+      if(errorSpan && errorSpan.innerHTML === '') {
+        for(let i = 0; i < errorArr.length ; i++ ) {
+          const err = errorArr[i]
+          const isLastIndex = i === errorArr.length - 1;
+          
+          const node = document.createTextNode(`${isLastIndex  ? err : err + ', '}`);
+          errorSpan.appendChild(node)
+        }
+      }
+      return false;
+      
+    } else {
+      errorSpan.innerHTML = '';
+      return true;
+    }
+  }
+
+  private resolveErrors(errors: any) {
+    let isValid = true;
+    for(const key in errors) {
+      let errorArr: string[] = getKeyValue(errors)(key)
+      isValid  = this.printErrors(key, errorArr);
+      
+    }
+    return isValid
+
+  }
 
   @AutoBind
   private submitHandler(e: Event) {
     e.preventDefault();
-    console.log(this.titleInputElement.value)
+    const { errors, inputVals } = this.getUserInput()
+    if(this.resolveErrors(errors)) {
+      console.log(inputVals)
+    }
+
   }
   
   private configure() {

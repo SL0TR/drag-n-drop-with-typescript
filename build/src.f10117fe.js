@@ -138,6 +138,82 @@ function AutoBind(_, _2, descriptor) {
 }
 
 exports.AutoBind = AutoBind;
+},{}],"src/validators.ts":[function(require,module,exports) {
+"use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.validate = void 0;
+var ErrorMessagegs = {
+  required: function required() {
+    return 'This field is required';
+  },
+  minL: function minL(val) {
+    return "Field requires minimum of " + val + " characters";
+  },
+  maxL: function maxL(val) {
+    return "Field requires maximum of " + val + " characters";
+  },
+  min: function min(val) {
+    return "Field requires minimum of " + val + " value";
+  },
+  max: function max(val) {
+    return "Field requires maximum of " + val + " value";
+  }
+};
+
+function validate(input) {
+  var errors = [];
+
+  if (input.required) {
+    if (input.value.toString().trim().length === 0) {
+      errors = __spreadArrays(errors, [ErrorMessagegs.required()]);
+    }
+  }
+
+  if (input.minL != null && typeof input.value === 'string') {
+    if (input.value.length < input.minL) {
+      errors = __spreadArrays(errors, [ErrorMessagegs.minL(input.minL)]);
+    }
+  }
+
+  if (input.maxL != null && typeof input.value === 'string') {
+    if (input.value.length < input.maxL) {
+      errors = __spreadArrays(errors, [ErrorMessagegs.maxL(input.maxL)]);
+    }
+  }
+
+  if (input.min != null && typeof input.value === "number") {
+    if (input.value < input.min) {
+      errors = __spreadArrays(errors, [ErrorMessagegs.maxL(input.min)]);
+    }
+  }
+
+  if (input.max != null && typeof input.value === "number") {
+    if (input.value > input.max) {
+      errors = __spreadArrays(errors, [ErrorMessagegs.maxL(input.max)]);
+    }
+  }
+
+  return errors;
+}
+
+exports.validate = validate;
 },{}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
@@ -159,6 +235,14 @@ Object.defineProperty(exports, "__esModule", {
 
 var decorators_1 = require("./decorators");
 
+var validators_1 = require("./validators");
+
+var getKeyValue = function getKeyValue(obj) {
+  return function (key) {
+    return obj[key];
+  };
+};
+
 var ProjectTemplate =
 /** @class */
 function () {
@@ -175,9 +259,82 @@ function () {
     this.attach();
   }
 
+  ProjectTemplate.prototype.getUserInput = function () {
+    var titleVal = this.titleInputElement.value;
+    var descVal = this.descriptionInputElement.value;
+    var peopleVal = +this.peopleInputElement.value;
+    var validatableTitle = {
+      value: titleVal,
+      required: true
+    };
+    var validatableDesc = {
+      value: descVal,
+      required: true,
+      minL: 5
+    };
+    var validatablePeople = {
+      value: peopleVal,
+      required: true,
+      min: 1,
+      max: 5
+    };
+    var InputErrorVals = {
+      title: validators_1.validate(validatableTitle),
+      description: validators_1.validate(validatableDesc),
+      people: validators_1.validate(validatablePeople)
+    };
+    return {
+      errors: InputErrorVals,
+      inputVals: {
+        title: titleVal,
+        description: descVal,
+        people: peopleVal
+      }
+    };
+  };
+
+  ProjectTemplate.prototype.printErrors = function (key, errorArr) {
+    var inputEl = this.appContainerElem.querySelector("#" + key);
+    var errorSpan = inputEl.nextElementSibling;
+
+    if (errorArr.length > 0) {
+      if (errorSpan && errorSpan.innerHTML === '') {
+        for (var i = 0; i < errorArr.length; i++) {
+          var err = errorArr[i];
+          var isLastIndex = i === errorArr.length - 1;
+          var node = document.createTextNode("" + (isLastIndex ? err : err + ', '));
+          errorSpan.appendChild(node);
+        }
+      }
+
+      return false;
+    } else {
+      errorSpan.innerHTML = '';
+      return true;
+    }
+  };
+
+  ProjectTemplate.prototype.resolveErrors = function (errors) {
+    var isValid = true;
+
+    for (var key in errors) {
+      var errorArr = getKeyValue(errors)(key);
+      isValid = this.printErrors(key, errorArr);
+    }
+
+    return isValid;
+  };
+
   ProjectTemplate.prototype.submitHandler = function (e) {
     e.preventDefault();
-    console.log(this.titleInputElement.value);
+
+    var _a = this.getUserInput(),
+        errors = _a.errors,
+        inputVals = _a.inputVals;
+
+    if (this.resolveErrors(errors)) {
+      console.log(inputVals);
+    }
   };
 
   ProjectTemplate.prototype.configure = function () {
@@ -195,7 +352,7 @@ function () {
 
 var projTemp = new ProjectTemplate();
 console.log(projTemp);
-},{"./decorators":"src/decorators.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./decorators":"src/decorators.ts","./validators":"src/validators.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -223,7 +380,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3278" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "13082" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

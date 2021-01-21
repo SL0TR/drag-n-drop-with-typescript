@@ -17,15 +17,18 @@
             <form id="project-form">
               <div class="mb-3">
                 <label for="title">Title</label>
-                <input class="form-control" type="text" id="title">
+                <input class="form-control mb-1" type="text" id="title">
+                <span class="error-msg alert-danger"></span>
               </div>
               <div class="mb-3">
                 <label for="description">Description</label>
-                <textarea class="form-control" id="description" rows="3"></textarea>
+                <textarea class="form-control mb-1" id="description" rows="3"></textarea>
+                <span class="error-msg alert-danger"></span>
               </div>
               <div class="mb-3">
                 <label for="people">People</label>
-                <input class="form-control" type="number" id="people" step="1" min="0" max="10">
+                <input class="form-control mb-1" type="number" id="people" step="1" min="0" max="10">
+                <span class="error-msg alert-danger"></span>
               </div>
               <button type="submit" class="btn btn-primary">Submit</button>
             </form>
