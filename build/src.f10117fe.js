@@ -200,13 +200,13 @@ function validate(input) {
 
   if (input.min != null && typeof input.value === "number") {
     if (input.value < input.min) {
-      errors = __spreadArrays(errors, [ErrorMessagegs.maxL(input.min)]);
+      errors = __spreadArrays(errors, [ErrorMessagegs.min(input.min)]);
     }
   }
 
   if (input.max != null && typeof input.value === "number") {
     if (input.value > input.max) {
-      errors = __spreadArrays(errors, [ErrorMessagegs.maxL(input.max)]);
+      errors = __spreadArrays(errors, [ErrorMessagegs.max(input.max)]);
     }
   }
 
@@ -214,6 +214,21 @@ function validate(input) {
 }
 
 exports.validate = validate;
+},{}],"src/helpers.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getKeyValue = void 0;
+
+var getKeyValue = function getKeyValue(obj) {
+  return function (key) {
+    return obj[key];
+  };
+};
+
+exports.getKeyValue = getKeyValue;
 },{}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
@@ -237,11 +252,7 @@ var decorators_1 = require("./decorators");
 
 var validators_1 = require("./validators");
 
-var getKeyValue = function getKeyValue(obj) {
-  return function (key) {
-    return obj[key];
-  };
-};
+var helpers_1 = require("./helpers");
 
 var ProjectTemplate =
 /** @class */
@@ -270,19 +281,20 @@ function () {
     var validatableDesc = {
       value: descVal,
       required: true,
-      minL: 5
+      minL: 7
     };
     var validatablePeople = {
       value: peopleVal,
       required: true,
       min: 1,
-      max: 5
+      max: 7
     };
     var InputErrorVals = {
       title: validators_1.validate(validatableTitle),
       description: validators_1.validate(validatableDesc),
       people: validators_1.validate(validatablePeople)
     };
+    console.log(InputErrorVals);
     return {
       errors: InputErrorVals,
       inputVals: {
@@ -318,7 +330,7 @@ function () {
     var isValid = true;
 
     for (var key in errors) {
-      var errorArr = getKeyValue(errors)(key);
+      var errorArr = helpers_1.getKeyValue(errors)(key);
       isValid = this.printErrors(key, errorArr);
     }
 
@@ -350,9 +362,42 @@ function () {
   return ProjectTemplate;
 }();
 
+var ProjectList =
+/** @class */
+function () {
+  function ProjectList(type) {
+    this.type = type;
+    this.templateElem = document.getElementById('project-list');
+    this.hostElem = document.getElementById("app");
+    var tempNode = document.importNode(this.templateElem.content, true);
+    this.element = tempNode.firstElementChild;
+    this.element.id = type + "-projects";
+    this.attach();
+    this.renderContent();
+  }
+
+  ProjectList.prototype.renderContent = function () {
+    var listId = this.type + "-project-list";
+    this.element.querySelector('ul').id = listId;
+    this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
+  };
+
+  ProjectList.prototype.attach = function () {
+    this.hostElem.insertAdjacentElement('beforeend', this.element);
+  };
+
+  return ProjectList;
+}();
+
 var projTemp = new ProjectTemplate();
-console.log(projTemp);
-},{"./decorators":"src/decorators.ts","./validators":"src/validators.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+var activeProjectList = new ProjectList('active');
+var finishedProjectList = new ProjectList('finished');
+console.log({
+  projTemp: projTemp,
+  activeProjectList: activeProjectList,
+  finishedProjectList: finishedProjectList
+});
+},{"./decorators":"src/decorators.ts","./validators":"src/validators.ts","./helpers":"src/helpers.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -380,7 +425,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "13082" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "12380" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

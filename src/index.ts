@@ -1,11 +1,9 @@
 import { AutoBind } from "./decorators";
 import { validate} from './validators';
+import { UserInput } from './types';
+import { getKeyValue } from './helpers';
 import { ValidatorConfig, InputErrors, Inputs } from './interfaces';
 
-const getKeyValue = <T extends object, U extends keyof T>(obj: T) => (key: U) =>
-  obj[key];
-
-type UserInput =  { errors: InputErrors, inputVals: Inputs }
 class ProjectTemplate {
   templateElem: HTMLTemplateElement;
   hostElem: HTMLDivElement;
@@ -40,20 +38,20 @@ class ProjectTemplate {
 
     const validatableTitle: ValidatorConfig = {
       value: titleVal,
-      required: true,
+      required: true
     }
 
     const validatableDesc: ValidatorConfig = {
       value: descVal,
       required: true,
-      minL: 5
+      minL: 7
     }
 
     const validatablePeople: ValidatorConfig = {
       value: peopleVal,
       required: true,
       min: 1,
-      max: 5
+      max: 7
     }
     
     const InputErrorVals : InputErrors = {
@@ -61,6 +59,8 @@ class ProjectTemplate {
       description: validate(validatableDesc),
       people: validate(validatablePeople)
     }
+
+    console.log(InputErrorVals)
 
     return { errors: InputErrorVals, inputVals: {
       title: titleVal,
@@ -72,7 +72,6 @@ class ProjectTemplate {
 
   private printErrors(key: string, errorArr: string[]) {
     const inputEl = this.appContainerElem.querySelector(`#${key}`)! as HTMLInputElement;
-    
     const errorSpan = inputEl.nextElementSibling! as HTMLSpanElement;
 
     if(errorArr.length > 0) {
@@ -123,6 +122,41 @@ class ProjectTemplate {
   }
 }
 
-const projTemp = new ProjectTemplate()
 
-console.log(projTemp)
+
+
+class ProjectList {
+  templateElem: HTMLTemplateElement;
+  hostElem: HTMLDivElement;
+  element: HTMLElement; 
+
+  constructor(private type: 'active'| 'finished' ) {
+    this.templateElem = document.getElementById('project-list')! as HTMLTemplateElement;
+    this.hostElem = document.getElementById("app")! as HTMLDivElement;
+
+    const tempNode = document.importNode(this.templateElem.content, true);
+    this.element = tempNode.firstElementChild as HTMLDivElement;
+    this.element.id = `${type}-projects`;
+
+    this.attach();
+    this.renderContent()
+  }
+
+  private renderContent() {
+    const listId = `${this.type}-project-list`;
+    this.element.querySelector('ul')!.id = listId;
+    this.element.querySelector('h2')!.textContent = this.type.toUpperCase() + ' Projects';
+  }
+
+
+  private attach() {
+    this.hostElem.insertAdjacentElement('beforeend', this.element);
+  }
+    
+}
+
+
+const projTemp = new ProjectTemplate()
+const activeProjectList = new ProjectList('active');
+const finishedProjectList = new ProjectList('finished');
+console.log({projTemp, activeProjectList, finishedProjectList })

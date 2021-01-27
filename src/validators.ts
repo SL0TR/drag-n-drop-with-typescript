@@ -36,15 +36,14 @@ export function validate(input: ValidatorConfig) {
 
   if(input.min != null && typeof input.value === "number") {
     if(input.value < input.min) {
-      errors = [...errors, ErrorMessagegs.maxL(input.min)];
+      errors = [...errors, ErrorMessagegs.min(input.min)];
     }
   }
 
   if(input.max != null && typeof input.value === "number") {
     if(input.value > input.max) {
-      errors = [...errors, ErrorMessagegs.maxL(input.max)];
+      errors = [...errors, ErrorMessagegs.max(input.max)];
     }
-    
   }
 
   return errors
