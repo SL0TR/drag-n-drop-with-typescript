@@ -3,4 +3,4 @@ import { InputErrors, Inputs } from './interfaces';
 
 export type UserInput =  { errors: InputErrors, inputVals: Inputs };
 
-export type Listener = (items: Project[]) => void;
+export type Listener<T> = (items: T[]) => void;

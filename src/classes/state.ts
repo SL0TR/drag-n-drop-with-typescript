@@ -3,13 +3,21 @@ import { ProjectStatus } from "../enums";
 import { Project } from "./project";
 import { Listener } from "../types";
 
-export class ProjectState {
-  private listeners: Listener[] = [];
+class State <T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListener(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn)
+  }
+
+}
+
+export class ProjectState  extends State<Project> {
   private projects: Project[] = [];
   private static instance: ProjectState;
 
   private constructor() {
-    
+    super()
   }
 
   static getInstance() {
@@ -21,9 +29,7 @@ export class ProjectState {
     return this.instance
   }
 
-  addListener(listenerFn: Listener) {
-    this.listeners.push(listenerFn)
-  }
+  
 
   addProject(project: Inputs) {
     const newProject = new Project(Math.random().toString(), project.title, project.description, project.people, ProjectStatus.Active)

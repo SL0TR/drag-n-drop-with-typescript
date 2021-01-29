@@ -156,6 +156,32 @@ exports.Project = Project;
 },{}],"src/classes/state.ts":[function(require,module,exports) {
 "use strict";
 
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -165,12 +191,30 @@ var enums_1 = require("../enums");
 
 var project_1 = require("./project");
 
-var ProjectState =
+var State =
 /** @class */
 function () {
-  function ProjectState() {
+  function State() {
     this.listeners = [];
-    this.projects = [];
+  }
+
+  State.prototype.addListener = function (listenerFn) {
+    this.listeners.push(listenerFn);
+  };
+
+  return State;
+}();
+
+var ProjectState =
+/** @class */
+function (_super) {
+  __extends(ProjectState, _super);
+
+  function ProjectState() {
+    var _this = _super.call(this) || this;
+
+    _this.projects = [];
+    return _this;
   }
 
   ProjectState.getInstance = function () {
@@ -180,10 +224,6 @@ function () {
 
     this.instance = new ProjectState();
     return this.instance;
-  };
-
-  ProjectState.prototype.addListener = function (listenerFn) {
-    this.listeners.push(listenerFn);
   };
 
   ProjectState.prototype.addProject = function (project) {
@@ -197,16 +237,79 @@ function () {
   };
 
   return ProjectState;
-}();
+}(State);
 
 exports.ProjectState = ProjectState;
-},{"../enums":"src/enums.ts","./project":"src/classes/project.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
+},{"../enums":"src/enums.ts","./project":"src/classes/project.ts"}],"src/classes/component.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Component = void 0;
+
+var Component =
+/** @class */
+function () {
+  function Component(tempId, hostElemId, insetAtStart, newElId) {
+    this.insetAtStart = insetAtStart;
+    this.templateElem = document.getElementById(tempId);
+    this.hostElem = document.getElementById(hostElemId);
+    var tempNode = document.importNode(this.templateElem.content, true);
+    this.appContainerElem = tempNode.firstElementChild;
+
+    if (newElId) {
+      this.appContainerElem.id = newElId;
+    }
+
+    this.attach(insetAtStart);
+  }
+
+  Component.prototype.attach = function (position) {
+    this.hostElem.insertAdjacentElement(position ? 'afterbegin' : 'beforeend', this.appContainerElem);
+  };
+
+  return Component;
+}();
+
+exports.Component = Component;
+},{}],"src/classes/projectList.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.ProjectList = void 0;
+
+var enums_1 = require("../enums");
+
+var component_1 = require("./component");
 
 var state_1 = require("./state");
 
@@ -214,28 +317,25 @@ var projectState = state_1.ProjectState.getInstance();
 
 var ProjectList =
 /** @class */
-function () {
+function (_super) {
+  __extends(ProjectList, _super);
+
   function ProjectList(type) {
-    var _this = this;
+    var _this = _super.call(this, 'project-list', 'app', false, type + "-projects") || this;
 
-    this.type = type;
-    this.templateElem = document.getElementById('project-list');
-    this.hostElem = document.getElementById("app");
-    this.assignedProjects = [];
-    var tempNode = document.importNode(this.templateElem.content, true);
-    this.element = tempNode.firstElementChild;
-    this.element.id = type + "-projects";
-    projectState.addListener(function (projects) {
-      _this.assignedProjects = projects;
+    _this.type = type;
+    _this.assignedProjects = [];
 
-      _this.renderProjects();
-    });
-    this.attach();
-    this.renderContent();
+    _this.configure(type);
+
+    _this.renderContent();
+
+    return _this;
   }
 
   ProjectList.prototype.renderProjects = function () {
     var listEl = document.getElementById(this.type + "-project-list");
+    listEl.innerHTML = '';
 
     for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
       var item = _a[_i];
@@ -245,21 +345,30 @@ function () {
     }
   };
 
-  ProjectList.prototype.renderContent = function () {
-    var listId = this.type + "-project-list";
-    this.element.querySelector('ul').id = listId;
-    this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
+  ProjectList.prototype.configure = function (projType) {
+    var _this = this;
+
+    projectState.addListener(function (projects) {
+      var relevantProjects = projects.filter(function (proj) {
+        return projType === 'active' ? proj.status === enums_1.ProjectStatus.Active : proj.status === enums_1.ProjectStatus.Finished;
+      });
+      _this.assignedProjects = relevantProjects;
+
+      _this.renderProjects();
+    });
   };
 
-  ProjectList.prototype.attach = function () {
-    this.hostElem.insertAdjacentElement('beforeend', this.element);
+  ProjectList.prototype.renderContent = function () {
+    var listId = this.type + "-project-list";
+    this.appContainerElem.querySelector('ul').id = listId;
+    this.appContainerElem.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
   };
 
   return ProjectList;
-}();
+}(component_1.Component);
 
 exports.ProjectList = ProjectList;
-},{"./state":"src/classes/state.ts"}],"src/decorators.ts":[function(require,module,exports) {
+},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts"}],"src/decorators.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -376,6 +485,32 @@ exports.getKeyValue = getKeyValue;
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
   var c = arguments.length,
       r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
@@ -399,22 +534,26 @@ var helpers_1 = require("../helpers");
 
 var state_1 = require("./state");
 
+var component_1 = require("./component");
+
 var projectState = state_1.ProjectState.getInstance();
 
 var ProjectTemplate =
 /** @class */
-function () {
+function (_super) {
+  __extends(ProjectTemplate, _super);
+
   function ProjectTemplate() {
-    this.templateElem = document.getElementById('project-template');
-    this.hostElem = document.getElementById("app");
-    var tempNode = document.importNode(this.templateElem.content, true);
-    this.appContainerElem = tempNode.firstElementChild;
-    this.formElem = this.appContainerElem.querySelector('#project-form');
-    this.titleInputElement = this.appContainerElem.querySelector('#title');
-    this.descriptionInputElement = this.appContainerElem.querySelector('#description');
-    this.peopleInputElement = this.appContainerElem.querySelector('#people');
-    this.configure();
-    this.attach();
+    var _this = _super.call(this, 'project-template', 'app', true) || this;
+
+    _this.formElem = _this.appContainerElem.querySelector('#project-form');
+    _this.titleInputElement = _this.appContainerElem.querySelector('#title');
+    _this.descriptionInputElement = _this.appContainerElem.querySelector('#description');
+    _this.peopleInputElement = _this.appContainerElem.querySelector('#people');
+
+    _this.configure();
+
+    return _this;
   }
 
   ProjectTemplate.prototype.getUserInput = function () {
@@ -441,7 +580,6 @@ function () {
       description: validators_1.validate(validatableDesc),
       people: validators_1.validate(validatablePeople)
     };
-    console.log(InputErrorVals);
     return {
       errors: InputErrorVals,
       inputVals: {
@@ -452,7 +590,7 @@ function () {
     };
   };
 
-  ProjectTemplate.prototype.printErrors = function (key, errorArr) {
+  ProjectTemplate.prototype.getAndPrintErrors = function (key, errorArr) {
     var inputEl = this.appContainerElem.querySelector("#" + key);
     var errorSpan = inputEl.nextElementSibling;
 
@@ -474,14 +612,16 @@ function () {
   };
 
   ProjectTemplate.prototype.resolveErrors = function (errors) {
-    var isValid = true;
+    var errArray = [];
 
     for (var key in errors) {
       var errorArr = helpers_1.getKeyValue(errors)(key);
-      isValid = this.printErrors(key, errorArr);
+      errArray.push(this.getAndPrintErrors(key, errorArr));
     }
 
-    return isValid;
+    return errArray.every(function (el) {
+      return el === true;
+    });
   };
 
   ProjectTemplate.prototype.submitHandler = function (e) {
@@ -496,21 +636,19 @@ function () {
     }
   };
 
+  ProjectTemplate.prototype.renderContent = function () {};
+
   ProjectTemplate.prototype.configure = function () {
     this.formElem.addEventListener('submit', this.submitHandler);
-  };
-
-  ProjectTemplate.prototype.attach = function () {
-    this.hostElem.insertAdjacentElement('afterbegin', this.appContainerElem);
   };
 
   __decorate([decorators_1.AutoBind], ProjectTemplate.prototype, "submitHandler", null);
 
   return ProjectTemplate;
-}();
+}(component_1.Component);
 
 exports.ProjectTemplate = ProjectTemplate;
-},{"../decorators":"src/decorators.ts","../validators":"src/validators.ts","../helpers":"src/helpers.ts","./state":"src/classes/state.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"../decorators":"src/decorators.ts","../validators":"src/validators.ts","../helpers":"src/helpers.ts","./state":"src/classes/state.ts","./component":"src/classes/component.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

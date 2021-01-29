@@ -4,34 +4,28 @@ import { UserInput } from '../types';
 import { getKeyValue } from '../helpers';
 import { ValidatorConfig, InputErrors } from '../interfaces';
 import { ProjectState } from "./state";
+import { Component } from "./component";
 
 const projectState = ProjectState.getInstance()
 
 
-export class ProjectTemplate {
-  templateElem: HTMLTemplateElement;
-  hostElem: HTMLDivElement;
-  appContainerElem: HTMLDivElement;
+export class ProjectTemplate extends Component<HTMLDivElement, HTMLElement> {
   formElem: HTMLFormElement
   titleInputElement: HTMLInputElement;
   descriptionInputElement: HTMLInputElement;
   peopleInputElement: HTMLInputElement;
 
   constructor() {
-    this.templateElem = document.getElementById('project-template')! as HTMLTemplateElement;
-    this.hostElem = document.getElementById("app")! as HTMLDivElement;
+  
+    super('project-template', 'app', true);
 
-    const tempNode = document.importNode(this.templateElem.content, true);
-    this.appContainerElem = tempNode.firstElementChild as HTMLDivElement;
     this.formElem = this.appContainerElem.querySelector('#project-form')! as HTMLFormElement;
 
     this.titleInputElement = this.appContainerElem.querySelector('#title')! as  HTMLInputElement;
     this.descriptionInputElement = this.appContainerElem.querySelector('#description')! as  HTMLInputElement;
     this.peopleInputElement = this.appContainerElem.querySelector('#people')! as  HTMLInputElement;
-
-    
+  
     this.configure()
-    this.attach() 
   }
 
   
@@ -65,8 +59,6 @@ export class ProjectTemplate {
       people: validate(validatablePeople)
     }
 
-    console.log(InputErrorVals)
-
     return { errors: InputErrorVals, inputVals: {
       title: titleVal,
       description: descVal,
@@ -75,7 +67,7 @@ export class ProjectTemplate {
   
   }
 
-  private printErrors(key: string, errorArr: string[]) {
+  private getAndPrintErrors(key: string, errorArr: string[]) {
     const inputEl = this.appContainerElem.querySelector(`#${key}`)! as HTMLInputElement;
     const errorSpan = inputEl.nextElementSibling! as HTMLSpanElement;
 
@@ -98,31 +90,31 @@ export class ProjectTemplate {
   }
 
   private resolveErrors(errors: any) {
-    let isValid = true;
+    let errArray = []
+
     for(const key in errors) {
       let errorArr: string[] = getKeyValue(errors)(key)
-      isValid  = this.printErrors(key, errorArr);
-      
+      errArray.push(this.getAndPrintErrors(key, errorArr));
     }
-    return isValid
-
+  
+    return errArray.every(el => el === true)
   }
 
   @AutoBind
   private submitHandler(e: Event) {
     e.preventDefault();
-    const { errors, inputVals } = this.getUserInput()
+    const { errors, inputVals } = this.getUserInput();
+  
     if(this.resolveErrors(errors)) {
       projectState.addProject(inputVals)
     }
 
   }
   
-  private configure() {
+  renderContent() {}
+  
+  configure() {
     this.formElem.addEventListener('submit', this.submitHandler)
   }
 
-  private attach() {
-    this.hostElem.insertAdjacentElement('afterbegin', this.appContainerElem);
-  }
 }
