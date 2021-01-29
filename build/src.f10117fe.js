@@ -117,7 +117,149 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/decorators.ts":[function(require,module,exports) {
+})({"src/enums.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ProjectStatus = void 0;
+var ProjectStatus;
+
+(function (ProjectStatus) {
+  ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
+  ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
+})(ProjectStatus = exports.ProjectStatus || (exports.ProjectStatus = {}));
+},{}],"src/classes/project.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Project = void 0;
+
+var Project =
+/** @class */
+function () {
+  function Project(id, title, description, people, status) {
+    this.id = id;
+    this.title = title;
+    this.description = description;
+    this.people = people;
+    this.status = status;
+  }
+
+  return Project;
+}();
+
+exports.Project = Project;
+},{}],"src/classes/state.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ProjectState = void 0;
+
+var enums_1 = require("../enums");
+
+var project_1 = require("./project");
+
+var ProjectState =
+/** @class */
+function () {
+  function ProjectState() {
+    this.listeners = [];
+    this.projects = [];
+  }
+
+  ProjectState.getInstance = function () {
+    if (this.instance) {
+      return this.instance;
+    }
+
+    this.instance = new ProjectState();
+    return this.instance;
+  };
+
+  ProjectState.prototype.addListener = function (listenerFn) {
+    this.listeners.push(listenerFn);
+  };
+
+  ProjectState.prototype.addProject = function (project) {
+    var newProject = new project_1.Project(Math.random().toString(), project.title, project.description, project.people, enums_1.ProjectStatus.Active);
+    this.projects.push(newProject);
+
+    for (var _i = 0, _a = this.listeners; _i < _a.length; _i++) {
+      var listenerFn = _a[_i];
+      listenerFn(this.projects.slice());
+    }
+  };
+
+  return ProjectState;
+}();
+
+exports.ProjectState = ProjectState;
+},{"../enums":"src/enums.ts","./project":"src/classes/project.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ProjectList = void 0;
+
+var state_1 = require("./state");
+
+var projectState = state_1.ProjectState.getInstance();
+
+var ProjectList =
+/** @class */
+function () {
+  function ProjectList(type) {
+    var _this = this;
+
+    this.type = type;
+    this.templateElem = document.getElementById('project-list');
+    this.hostElem = document.getElementById("app");
+    this.assignedProjects = [];
+    var tempNode = document.importNode(this.templateElem.content, true);
+    this.element = tempNode.firstElementChild;
+    this.element.id = type + "-projects";
+    projectState.addListener(function (projects) {
+      _this.assignedProjects = projects;
+
+      _this.renderProjects();
+    });
+    this.attach();
+    this.renderContent();
+  }
+
+  ProjectList.prototype.renderProjects = function () {
+    var listEl = document.getElementById(this.type + "-project-list");
+
+    for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
+      var item = _a[_i];
+      var listItem = document.createElement('li');
+      listItem.textContent = item.title;
+      listEl.appendChild(listItem);
+    }
+  };
+
+  ProjectList.prototype.renderContent = function () {
+    var listId = this.type + "-project-list";
+    this.element.querySelector('ul').id = listId;
+    this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
+  };
+
+  ProjectList.prototype.attach = function () {
+    this.hostElem.insertAdjacentElement('beforeend', this.element);
+  };
+
+  return ProjectList;
+}();
+
+exports.ProjectList = ProjectList;
+},{"./state":"src/classes/state.ts"}],"src/decorators.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -229,7 +371,7 @@ var getKeyValue = function getKeyValue(obj) {
 };
 
 exports.getKeyValue = getKeyValue;
-},{}],"src/index.ts":[function(require,module,exports) {
+},{}],"src/classes/projectTemplate.ts":[function(require,module,exports) {
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -247,12 +389,17 @@ var __decorate = this && this.__decorate || function (decorators, target, key, d
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ProjectTemplate = void 0;
 
-var decorators_1 = require("./decorators");
+var decorators_1 = require("../decorators");
 
-var validators_1 = require("./validators");
+var validators_1 = require("../validators");
 
-var helpers_1 = require("./helpers");
+var helpers_1 = require("../helpers");
+
+var state_1 = require("./state");
+
+var projectState = state_1.ProjectState.getInstance();
 
 var ProjectTemplate =
 /** @class */
@@ -345,7 +492,7 @@ function () {
         inputVals = _a.inputVals;
 
     if (this.resolveErrors(errors)) {
-      console.log(inputVals);
+      projectState.addProject(inputVals);
     }
   };
 
@@ -362,42 +509,31 @@ function () {
   return ProjectTemplate;
 }();
 
-var ProjectList =
-/** @class */
-function () {
-  function ProjectList(type) {
-    this.type = type;
-    this.templateElem = document.getElementById('project-list');
-    this.hostElem = document.getElementById("app");
-    var tempNode = document.importNode(this.templateElem.content, true);
-    this.element = tempNode.firstElementChild;
-    this.element.id = type + "-projects";
-    this.attach();
-    this.renderContent();
-  }
+exports.ProjectTemplate = ProjectTemplate;
+},{"../decorators":"src/decorators.ts","../validators":"src/validators.ts","../helpers":"src/helpers.ts","./state":"src/classes/state.ts"}],"src/index.ts":[function(require,module,exports) {
+"use strict";
 
-  ProjectList.prototype.renderContent = function () {
-    var listId = this.type + "-project-list";
-    this.element.querySelector('ul').id = listId;
-    this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
-  };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-  ProjectList.prototype.attach = function () {
-    this.hostElem.insertAdjacentElement('beforeend', this.element);
-  };
+var state_1 = require("./classes/state");
 
-  return ProjectList;
-}();
+var projectList_1 = require("./classes/projectList");
 
-var projTemp = new ProjectTemplate();
-var activeProjectList = new ProjectList('active');
-var finishedProjectList = new ProjectList('finished');
+var projectTemplate_1 = require("./classes/projectTemplate");
+
+var projectState = state_1.ProjectState.getInstance();
+var projTemp = new projectTemplate_1.ProjectTemplate();
+var activeProjectList = new projectList_1.ProjectList('active');
+var finishedProjectList = new projectList_1.ProjectList('finished');
 console.log({
   projTemp: projTemp,
   activeProjectList: activeProjectList,
-  finishedProjectList: finishedProjectList
+  finishedProjectList: finishedProjectList,
+  projectState: projectState
 });
-},{"./decorators":"src/decorators.ts","./validators":"src/validators.ts","./helpers":"src/helpers.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./classes/state":"src/classes/state.ts","./classes/projectList":"src/classes/projectList.ts","./classes/projectTemplate":"src/classes/projectTemplate.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -425,7 +561,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "12380" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3706" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
