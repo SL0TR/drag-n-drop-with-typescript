@@ -273,7 +273,72 @@ function () {
 }();
 
 exports.Component = Component;
-},{}],"src/classes/projectList.ts":[function(require,module,exports) {
+},{}],"src/classes/projectItem.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ProjectItem = void 0;
+
+var component_1 = require("./component");
+
+var ProjectItem =
+/** @class */
+function (_super) {
+  __extends(ProjectItem, _super);
+
+  function ProjectItem(hostId, project) {
+    var _this = _super.call(this, 'single-project', hostId, false, project.id) || this;
+
+    _this.project = project;
+
+    _this.configure();
+
+    _this.renderContent();
+
+    return _this;
+  }
+
+  ProjectItem.prototype.configure = function () {};
+
+  ProjectItem.prototype.renderContent = function () {
+    this.hostElem.querySelector('h2').textContent = this.project.title;
+    this.hostElem.querySelector('h3').textContent = this.project.people.toString();
+    this.hostElem.querySelector('p').textContent = this.project.description;
+  };
+
+  return ProjectItem;
+}(component_1.Component);
+
+exports.ProjectItem = ProjectItem;
+},{"./component":"src/classes/component.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
 "use strict";
 
 var __extends = this && this.__extends || function () {
@@ -313,6 +378,8 @@ var component_1 = require("./component");
 
 var state_1 = require("./state");
 
+var projectItem_1 = require("./projectItem");
+
 var projectState = state_1.ProjectState.getInstance();
 
 var ProjectList =
@@ -336,12 +403,11 @@ function (_super) {
   ProjectList.prototype.renderProjects = function () {
     var listEl = document.getElementById(this.type + "-project-list");
     listEl.innerHTML = '';
+    console.log(this);
 
     for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
       var item = _a[_i];
-      var listItem = document.createElement('li');
-      listItem.textContent = item.title;
-      listEl.appendChild(listItem);
+      new projectItem_1.ProjectItem(this.appContainerElem.querySelector('ul').id, item);
     }
   };
 
@@ -368,7 +434,7 @@ function (_super) {
 }(component_1.Component);
 
 exports.ProjectList = ProjectList;
-},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts"}],"src/decorators.ts":[function(require,module,exports) {
+},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts","./projectItem":"src/classes/projectItem.ts"}],"src/decorators.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -699,7 +765,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3706" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "14192" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

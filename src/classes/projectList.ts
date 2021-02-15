@@ -2,6 +2,7 @@ import { ProjectStatus } from "../enums";
 import { Component } from "./component";
 import { Project } from "./project";
 import { ProjectState } from "./state";
+import { ProjectItem } from './projectItem'
 
 const projectState = ProjectState.getInstance()
 
@@ -23,10 +24,9 @@ export class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   private renderProjects() {
     const listEl = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
     listEl.innerHTML = '';
+    console.log(this)
     for(const item of this.assignedProjects) {
-      const listItem = document.createElement('li');
-      listItem.textContent = item.title;
-      listEl.appendChild(listItem)
+      new ProjectItem(this.appContainerElem.querySelector('ul')!.id, item)
     }
   }
 
