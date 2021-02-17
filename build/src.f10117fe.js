@@ -273,8 +273,31 @@ function () {
 }();
 
 exports.Component = Component;
+},{}],"src/decorators.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AutoBind = void 0;
+
+function AutoBind(_, _2, descriptor) {
+  var originalMethod = descriptor.value;
+  var adjDescriptor = {
+    configurable: true,
+    get: function get() {
+      var boundFn = originalMethod.bind(this);
+      return boundFn;
+    }
+  };
+  return adjDescriptor;
+}
+
+exports.AutoBind = AutoBind;
 },{}],"src/classes/projectItem.ts":[function(require,module,exports) {
 "use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 var __extends = this && this.__extends || function () {
   var _extendStatics = function extendStatics(d, b) {
@@ -302,10 +325,22 @@ var __extends = this && this.__extends || function () {
   };
 }();
 
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+    if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  }
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.ProjectItem = void 0;
+
+var decorators_1 = require("../decorators");
 
 var component_1 = require("./component");
 
@@ -326,19 +361,40 @@ function (_super) {
     return _this;
   }
 
-  ProjectItem.prototype.configure = function () {};
+  Object.defineProperty(ProjectItem.prototype, "persons", {
+    get: function get() {
+      return this.project.people === 1 ? '1 person' : this.project.people + " persons";
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  ProjectItem.prototype.dragStartHandler = function (event) {
+    console.log('drag start', event);
+  };
+
+  ProjectItem.prototype.dragEndHandler = function (event) {
+    console.log('drag end', event);
+  };
+
+  ProjectItem.prototype.configure = function () {
+    this.hostElem.addEventListener('dragstart', this.dragStartHandler);
+    this.hostElem.addEventListener('dragend', this.dragEndHandler);
+  };
 
   ProjectItem.prototype.renderContent = function () {
     this.hostElem.querySelector('h2').textContent = this.project.title;
-    this.hostElem.querySelector('h3').textContent = this.project.people.toString();
+    this.hostElem.querySelector('h3').textContent = this.persons + ' assigned';
     this.hostElem.querySelector('p').textContent = this.project.description;
   };
+
+  __decorate([decorators_1.AutoBind], ProjectItem.prototype, "configure", null);
 
   return ProjectItem;
 }(component_1.Component);
 
 exports.ProjectItem = ProjectItem;
-},{"./component":"src/classes/component.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
+},{"../decorators":"src/decorators.ts","./component":"src/classes/component.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
 "use strict";
 
 var __extends = this && this.__extends || function () {
@@ -434,28 +490,7 @@ function (_super) {
 }(component_1.Component);
 
 exports.ProjectList = ProjectList;
-},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts","./projectItem":"src/classes/projectItem.ts"}],"src/decorators.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.AutoBind = void 0;
-
-function AutoBind(_, _2, descriptor) {
-  var originalMethod = descriptor.value;
-  var adjDescriptor = {
-    configurable: true,
-    get: function get() {
-      var boundFn = originalMethod.bind(this);
-      return boundFn;
-    }
-  };
-  return adjDescriptor;
-}
-
-exports.AutoBind = AutoBind;
-},{}],"src/validators.ts":[function(require,module,exports) {
+},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts","./projectItem":"src/classes/projectItem.ts"}],"src/validators.ts":[function(require,module,exports) {
 "use strict";
 
 var __spreadArrays = this && this.__spreadArrays || function () {
@@ -765,7 +800,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "14192" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3516" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
