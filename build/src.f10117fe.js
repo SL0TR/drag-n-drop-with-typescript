@@ -229,7 +229,21 @@ function (_super) {
   ProjectState.prototype.addProject = function (project) {
     var newProject = new project_1.Project(Math.random().toString(), project.title, project.description, project.people, enums_1.ProjectStatus.Active);
     this.projects.push(newProject);
+    this.updateListeners();
+  };
 
+  ProjectState.prototype.moveProject = function (projectId, newStatus) {
+    var project = this.projects.find(function (prj) {
+      return prj.id === projectId;
+    });
+
+    if (project && project.status !== newStatus) {
+      project.status = newStatus;
+      this.updateListeners();
+    }
+  };
+
+  ProjectState.prototype.updateListeners = function () {
     for (var _i = 0, _a = this.listeners; _i < _a.length; _i++) {
       var listenerFn = _a[_i];
       listenerFn(this.projects.slice());
@@ -370,11 +384,11 @@ function (_super) {
   });
 
   ProjectItem.prototype.dragStartHandler = function (event) {
-    console.log('drag start', event);
+    event.dataTransfer.setData('text/plain', this.project.id);
+    event.dataTransfer.effectAllowed = 'move';
   };
 
-  ProjectItem.prototype.dragEndHandler = function (event) {
-    console.log('drag end', event);
+  ProjectItem.prototype.dragEndHandler = function (_) {// console.log('drag end',  event)
   };
 
   ProjectItem.prototype.configure = function () {
@@ -388,6 +402,8 @@ function (_super) {
     this.hostElem.querySelector('p').textContent = this.project.description;
   };
 
+  __decorate([decorators_1.AutoBind], ProjectItem.prototype, "dragStartHandler", null);
+
   __decorate([decorators_1.AutoBind], ProjectItem.prototype, "configure", null);
 
   return ProjectItem;
@@ -396,6 +412,8 @@ function (_super) {
 exports.ProjectItem = ProjectItem;
 },{"../decorators":"src/decorators.ts","./component":"src/classes/component.ts"}],"src/classes/projectList.ts":[function(require,module,exports) {
 "use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 var __extends = this && this.__extends || function () {
   var _extendStatics = function extendStatics(d, b) {
@@ -423,6 +441,16 @@ var __extends = this && this.__extends || function () {
   };
 }();
 
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+    if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  }
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -435,6 +463,8 @@ var component_1 = require("./component");
 var state_1 = require("./state");
 
 var projectItem_1 = require("./projectItem");
+
+var decorators_1 = require("../decorators");
 
 var projectState = state_1.ProjectState.getInstance();
 
@@ -456,10 +486,27 @@ function (_super) {
     return _this;
   }
 
+  ProjectList.prototype.dragOverHandler = function (event) {
+    if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+      event.preventDefault();
+      var listEl = this.appContainerElem.querySelector('ul');
+      listEl === null || listEl === void 0 ? void 0 : listEl.classList.add('droppable');
+    }
+  };
+
+  ProjectList.prototype.dropHandler = function (event) {
+    var projId = event.dataTransfer.getData('text/plain');
+    projectState.moveProject(projId, this.type === 'active' ? enums_1.ProjectStatus.Active : enums_1.ProjectStatus.Finished);
+  };
+
+  ProjectList.prototype.dragLeaveHandler = function (_) {
+    var listEl = this.appContainerElem.querySelector('ul');
+    listEl === null || listEl === void 0 ? void 0 : listEl.classList.remove('droppable');
+  };
+
   ProjectList.prototype.renderProjects = function () {
     var listEl = document.getElementById(this.type + "-project-list");
     listEl.innerHTML = '';
-    console.log(this);
 
     for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
       var item = _a[_i];
@@ -470,6 +517,9 @@ function (_super) {
   ProjectList.prototype.configure = function (projType) {
     var _this = this;
 
+    this.appContainerElem.addEventListener('dragover', this.dragOverHandler);
+    this.appContainerElem.addEventListener('dragleave', this.dragLeaveHandler);
+    this.appContainerElem.addEventListener('drop', this.dropHandler);
     projectState.addListener(function (projects) {
       var relevantProjects = projects.filter(function (proj) {
         return projType === 'active' ? proj.status === enums_1.ProjectStatus.Active : proj.status === enums_1.ProjectStatus.Finished;
@@ -486,11 +536,17 @@ function (_super) {
     this.appContainerElem.querySelector('h2').textContent = this.type.toUpperCase() + ' Projects';
   };
 
+  __decorate([decorators_1.AutoBind], ProjectList.prototype, "dragOverHandler", null);
+
+  __decorate([decorators_1.AutoBind], ProjectList.prototype, "dropHandler", null);
+
+  __decorate([decorators_1.AutoBind], ProjectList.prototype, "dragLeaveHandler", null);
+
   return ProjectList;
 }(component_1.Component);
 
 exports.ProjectList = ProjectList;
-},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts","./projectItem":"src/classes/projectItem.ts"}],"src/validators.ts":[function(require,module,exports) {
+},{"../enums":"src/enums.ts","./component":"src/classes/component.ts","./state":"src/classes/state.ts","./projectItem":"src/classes/projectItem.ts","../decorators":"src/decorators.ts"}],"src/validators.ts":[function(require,module,exports) {
 "use strict";
 
 var __spreadArrays = this && this.__spreadArrays || function () {
@@ -800,7 +856,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3516" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "2999" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

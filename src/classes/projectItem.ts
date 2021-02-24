@@ -19,14 +19,14 @@ export class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> impl
     this.renderContent()
   }
 
-  
+  @AutoBind
   dragStartHandler(event: DragEvent) {
-    console.log('drag start',  event)
+    event.dataTransfer!.setData('text/plain', this.project.id);
+    event.dataTransfer!.effectAllowed = 'move';
   }
 
-  dragEndHandler(event: DragEvent) {
-    console.log('drag end',  event)
-
+  dragEndHandler(_: DragEvent) {
+    // console.log('drag end',  event)
   }
   
 
